@@ -1,0 +1,102 @@
+{
+  "groups": [
+    {
+      "name": "audit",
+      "type": "com.shared.audit.config.AuditProperties",
+      "sourceType": "com.shared.audit.config.AuditProperties"
+    },
+    {
+      "name": "audit.datasource",
+      "type": "com.shared.audit.config.AuditDataSourceProperties",
+      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+    },
+    {
+      "name": "audit.datasource.xa",
+      "type": "org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$Xa",
+      "sourceType": "com.shared.audit.config.AuditDataSourceProperties",
+      "sourceMethod": "getXa()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "audit.datasource.driver-class-name",
+      "type": "java.lang.String",
+      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+    },
+    {
+      "name": "audit.datasource.embedded-database-connection",
+      "type": "org.springframework.boot.jdbc.EmbeddedDatabaseConnection",
+      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+    },
+    {
+      "name": "audit.datasource.generate-unique-name",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+    },
+    {
+      "name": "audit.datasource.jndi-name",
+      "type": "java.lang.String",
+      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+    },
+    {
+      "name": "audit.datasource.name",
+      "type": "java.lang.String",
+      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+    },
+    {
+      "name": "audit.datasource.password",
+      "type": "java.lang.String",
+      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+    },
+    {
+      "name": "audit.datasource.type",
+      "type": "java.lang.Class<? extends javax.sql.DataSource>",
+      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+    },
+    {
+      "name": "audit.datasource.url",
+      "type": "java.lang.String",
+      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+    },
+    {
+      "name": "audit.datasource.username",
+      "type": "java.lang.String",
+      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+    },
+    {
+      "name": "audit.datasource.xa.data-source-class-name",
+      "type": "java.lang.String",
+      "sourceType": "org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$Xa"
+    },
+    {
+      "name": "audit.datasource.xa.properties",
+      "type": "java.util.Map<java.lang.String,java.lang.String>",
+      "sourceType": "org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$Xa"
+    },
+    {
+      "name": "audit.enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.shared.audit.config.AuditProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "audit.hashing-algorithm",
+      "type": "java.lang.String",
+      "sourceType": "com.shared.audit.config.AuditProperties",
+      "defaultValue": "SHA-256"
+    },
+    {
+      "name": "audit.initial-hash-value",
+      "type": "java.lang.String",
+      "sourceType": "com.shared.audit.config.AuditProperties",
+      "defaultValue": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "name": "audit.table-name",
+      "type": "java.lang.String",
+      "sourceType": "com.shared.audit.config.AuditProperties",
+      "defaultValue": "audit_event"
+    }
+  ],
+  "hints": []
+}
