@@ -1,6 +1,6 @@
 # Integrating Shared-Lib as a JAR Dependency in a Spring Boot Microservice
 
-This guide provides a step-by-step process to integrate the `shared-lib` JAR into any Spring Boot microservice. The library offers optional features like audit logging, JWT-based security, SFTP utilities, global exception handling, and common utilities, all designed for minimal impact.
+This guide walks through wiring the `shared-lib` JAR into a Spring Boot microservice. The library ships opt-in modules for auditing, JWT security, SFTP, secure pagination, file uploads, common filters, and DTOs. Each module activates only when you set the corresponding properties, keeping the footprint small.
 
 ## Prerequisites
 - Spring Boot application (version 3.x recommended, compatible with the library's Spring Boot 3.2.5).
@@ -31,9 +31,7 @@ implementation 'com.shared:shared-lib:0.0.1-SNAPSHOT'
 - **Impact:** No code changes; just a build file update.
 
 ## Step 2: Configure Properties
-The library uses conditional auto-configuration, so features are opt-in. Override defaults in your `application.yml` or `application.properties`.
-
-Add to `application.yml`:
+Each feature is guarded behind configuration flags. Override only what you need in `application.yml` (or `application.properties`):
 ```yaml
 shared-lib:
   audit:
@@ -54,19 +52,29 @@ shared-lib:
     strict-host-key-checking: true
 
   security:
-    enabled: true  # Enable JWT-based security
+    enabled: true  # Enable JWT-based security filter chain
     permitted-paths:
       - /actuator/**
       - /v3/api-docs/**
       - /swagger-ui/**
       - /your/public/endpoints/**
+
+  file-upload:
+    enabled: true
+    base-dir: /data/uploads
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}         # 32+ byte hex/base64 string
+    issuer: payment-flow-api
+    audience: payment-flow-clients
 ```
 
-- **Action:** Customize values; use environment variables for secrets.
-- **Impact:** Minimal; only add properties for needed features. Disabled by default.
+- **Action:** Customize only the sections you intend to use. Secrets should come from environment variables or an external vault.
+- **Impact:** No application code needed; features remain dormant until enabled.
 
 ## Step 3: Enable Features in Code (If Required)
-Most features auto-activate via properties, but some need annotations or injections.
+Auto-configuration covers bean creation. You only need to touch code when you want to consume a service or add annotations.
 
 ### For Audit Logging
 - **Requirement:** DataSource bean (e.g., from `spring-boot-starter-data-jpa`).
@@ -96,7 +104,8 @@ Most features auto-activate via properties, but some need annotations or injecti
 - **Impact:** Add annotation to methods or inject services where needed.
 
 ### For Security (JWT)
-- **Action:** Add `@EnableSharedSecurity` to your main class.
+- **Action:** Setting `shared-lib.security.enabled=true` activates the stateless security `SecurityFilterChain`.
+- **Swagger integration:** If you want the bundled OpenAPI security config, add `@EnableSharedSecurity` to any `@Configuration` class.
   ```java
   @SpringBootApplication
   @EnableSharedSecurity
@@ -106,7 +115,8 @@ Most features auto-activate via properties, but some need annotations or injecti
       }
   }
   ```
-- **Impact:** One annotation; secures endpoints except permitted paths.
+- **Impact:** All endpoints (other than `permitted-paths`) expect a valid JWT signed with your configured secret.
+- **Tip:** Register additional Spring Security customizers if you need method security, role mapping, etc.
 
 ### For SFTP Utilities
 - **Action:** Inject `SftpUtil`.
@@ -120,6 +130,24 @@ Most features auto-activate via properties, but some need annotations or injecti
   ```
 - **Impact:** Inject and call as needed.
 
+### For File Upload Utility
+- **Action:** Inject `FileStorageService`; no manual bean definition required.
+  ```java
+  @Service
+  public class ReceiptUploadService {
+      private final FileStorageService fileStorageService;
+
+      public ReceiptUploadService(FileStorageService fileStorageService) {
+          this.fileStorageService = fileStorageService;
+      }
+
+      public FileMetadata store(MultipartFile file) throws IOException {
+          return fileStorageService.storeFile(file, "receipts", file.getOriginalFilename());
+      }
+  }
+  ```
+- **Impact:** Directory is controlled by `shared-lib.file-upload.base-dir`.
+
 ### For Global Exception Handling
 - **Action:** None required; auto-applies to controllers.
 - **Impact:** Zero changes; consistent error responses.
@@ -127,6 +155,8 @@ Most features auto-activate via properties, but some need annotations or injecti
 ### For Other Utilities
 - **Action:** Import and use classes from `com.shared.common` (e.g., DTOs, annotations).
 - **Impact:** Direct usage without modifications.
+
+> **Note on component scanning:** Some supporting filters (`RequestIdFilter`, `SignatureVerificationFilter`) are declared as `@Component`. Ensure your application’s component scan includes `com.shared` (e.g., `@SpringBootApplication(scanBasePackages = {"com.example", "com.shared"})`) if you rely on them.
 
 ## Step 4: Test and Validate
 - Run your microservice and verify features (e.g., check audit logs in DB, test secured endpoints).
@@ -139,5 +169,4 @@ Most features auto-activate via properties, but some need annotations or injecti
 - **Updates:** Check for changes in library versions.
 - **Minimal Changes:** With dependency and properties, most features work without code edits. Total changes: 1-5 lines in build file, 10-20 in config, optional annotations/injections.
 
-For issues, refer to library source or provide microservice details.</content>
-<parameter name="filePath">/Users/rahulcharvekar/Documents/Repos/LBE/PaymentReconciliation/shared-lib/SharedLibIntegrationGuide.md
+For issues, refer to the library source or provide microservice details.</content>
