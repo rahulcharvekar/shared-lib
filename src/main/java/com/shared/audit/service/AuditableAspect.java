@@ -13,14 +13,17 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
 
+import com.shared.audit.AuditHelper;
 import com.shared.common.annotation.Auditable;
-import com.shared.utilities.AuditHelper;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
  * Aspect that intercepts methods annotated with @Auditable and records audit events.
  */
 @Aspect
 @Component
+@ConditionalOnProperty(prefix = "shared-lib.audit", name = "enabled", havingValue = "true")
 public class AuditableAspect {
 
     private final AuditHelper auditHelper;

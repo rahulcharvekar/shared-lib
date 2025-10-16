@@ -1,4 +1,4 @@
-package com.shared.utilities;
+package com.shared.audit;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

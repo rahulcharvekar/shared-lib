@@ -1,1 +1,6 @@
+com.shared.config.SharedLibCoreAutoConfiguration
 com.shared.audit.config.AuditAutoConfiguration
+com.shared.security.config.SecurityAutoConfiguration
+com.shared.utilities.sftp.SftpAutoConfiguration
+com.shared.utilities.fileupload.FileUploadAutoConfiguration
+com.shared.common.config.FiltersAutoConfiguration

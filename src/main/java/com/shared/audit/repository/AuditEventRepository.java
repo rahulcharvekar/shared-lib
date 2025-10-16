@@ -9,9 +9,10 @@ import java.util.Optional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.shared.audit.config.AuditProperties;
 import com.shared.audit.exception.AuditPersistenceException;
 import com.shared.audit.model.AuditEvent;
+import com.shared.config.AuditProperties;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;

@@ -1,101 +1,43 @@
 {
   "groups": [
     {
-      "name": "audit",
-      "type": "com.shared.audit.config.AuditProperties",
-      "sourceType": "com.shared.audit.config.AuditProperties"
+      "name": "app.jwt",
+      "type": "com.shared.security.JwtConfig",
+      "sourceType": "com.shared.security.JwtConfig"
     },
     {
-      "name": "audit.datasource",
-      "type": "com.shared.audit.config.AuditDataSourceProperties",
-      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+      "name": "shared-lib",
+      "type": "com.shared.config.SharedLibConfigurationProperties",
+      "sourceType": "com.shared.config.SharedLibConfigurationProperties"
     },
     {
-      "name": "audit.datasource.xa",
-      "type": "org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$Xa",
-      "sourceType": "com.shared.audit.config.AuditDataSourceProperties",
-      "sourceMethod": "getXa()"
+      "name": "shared-lib.file-upload",
+      "type": "com.shared.utilities.fileupload.FileStorageProperties",
+      "sourceType": "com.shared.utilities.fileupload.FileStorageProperties"
     }
   ],
   "properties": [
     {
-      "name": "audit.datasource.driver-class-name",
+      "name": "app.jwt.audience",
       "type": "java.lang.String",
-      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+      "sourceType": "com.shared.security.JwtConfig"
     },
     {
-      "name": "audit.datasource.embedded-database-connection",
-      "type": "org.springframework.boot.jdbc.EmbeddedDatabaseConnection",
-      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
-    },
-    {
-      "name": "audit.datasource.generate-unique-name",
-      "type": "java.lang.Boolean",
-      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
-    },
-    {
-      "name": "audit.datasource.jndi-name",
+      "name": "app.jwt.issuer",
       "type": "java.lang.String",
-      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+      "sourceType": "com.shared.security.JwtConfig"
     },
     {
-      "name": "audit.datasource.name",
+      "name": "app.jwt.secret",
       "type": "java.lang.String",
-      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
+      "sourceType": "com.shared.security.JwtConfig"
     },
     {
-      "name": "audit.datasource.password",
+      "name": "shared-lib.file-upload.base-dir",
       "type": "java.lang.String",
-      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
-    },
-    {
-      "name": "audit.datasource.type",
-      "type": "java.lang.Class<? extends javax.sql.DataSource>",
-      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
-    },
-    {
-      "name": "audit.datasource.url",
-      "type": "java.lang.String",
-      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
-    },
-    {
-      "name": "audit.datasource.username",
-      "type": "java.lang.String",
-      "sourceType": "com.shared.audit.config.AuditDataSourceProperties"
-    },
-    {
-      "name": "audit.datasource.xa.data-source-class-name",
-      "type": "java.lang.String",
-      "sourceType": "org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$Xa"
-    },
-    {
-      "name": "audit.datasource.xa.properties",
-      "type": "java.util.Map<java.lang.String,java.lang.String>",
-      "sourceType": "org.springframework.boot.autoconfigure.jdbc.DataSourceProperties$Xa"
-    },
-    {
-      "name": "audit.enabled",
-      "type": "java.lang.Boolean",
-      "sourceType": "com.shared.audit.config.AuditProperties",
-      "defaultValue": false
-    },
-    {
-      "name": "audit.hashing-algorithm",
-      "type": "java.lang.String",
-      "sourceType": "com.shared.audit.config.AuditProperties",
-      "defaultValue": "SHA-256"
-    },
-    {
-      "name": "audit.initial-hash-value",
-      "type": "java.lang.String",
-      "sourceType": "com.shared.audit.config.AuditProperties",
-      "defaultValue": "0000000000000000000000000000000000000000000000000000000000000000"
-    },
-    {
-      "name": "audit.table-name",
-      "type": "java.lang.String",
-      "sourceType": "com.shared.audit.config.AuditProperties",
-      "defaultValue": "audit_event"
+      "description": "Base directory where files will be stored. Defaults to \"uploads\".",
+      "sourceType": "com.shared.utilities.fileupload.FileStorageProperties",
+      "defaultValue": "uploads"
     }
   ],
   "hints": []

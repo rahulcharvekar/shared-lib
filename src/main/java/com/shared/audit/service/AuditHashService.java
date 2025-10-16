@@ -10,9 +10,10 @@ import java.util.Map;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.shared.audit.config.AuditProperties;
 import com.shared.audit.exception.AuditPersistenceException;
 import com.shared.audit.model.AuditEventRequest;
+import com.shared.config.AuditProperties;
+
 import org.springframework.util.StringUtils;
 
 /**

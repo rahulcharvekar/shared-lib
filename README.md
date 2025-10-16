@@ -1,6 +1,64 @@
 # Shared Audit Utility
 
-This module provides a plug-and-play Spring Boot utility for recording application audit events in a dedicated audit database. It is packaged as a reusable JAR and exposes a single `AuditTrailService` entry point that other microservices can inject and call.
+This module provides a plug-and-play Spring Boot utility for recording application audit events in a dedicated audit database. It is packaged as a reusable JAR and exposes utilities for audit trail and SFTP operations.
+
+The library includes a default `application.yml` with sample configurations that services can override.
+
+## SFTP Utility
+
+The library includes a generic SFTP utility for polling and downloading files from SFTP servers.
+
+### Enabling SFTP Utility
+
+Set `shared-lib.sftp.enabled=true` and configure the connection properties (override defaults from the library's `application.yml`):
+
+```yaml
+shared-lib:
+  sftp:
+    enabled: true
+    host: sftp.example.com
+    port: 22
+    username: your_username
+    password: your_password
+    remote-directory: /incoming
+    local-directory: /app/files
+    known-hosts-file: ~/.ssh/known_hosts
+    strict-host-key-checking: true
+```
+
+### Using SFTP Utility
+
+Inject `SftpUtil` and use it to connect, list, download, and manage files:
+
+```java
+@Service
+public class FileProcessor {
+
+    private final SftpUtil sftpUtil;
+
+    public FileProcessor(SftpUtil sftpUtil) {
+        this.sftpUtil = sftpUtil;
+    }
+
+    @Scheduled(fixedDelay = 60000) // Poll every minute
+    public void pollFiles() {
+        try {
+            sftpUtil.connect();
+            List<String> files = sftpUtil.listFiles();
+            for (String file : files) {
+                sftpUtil.downloadFile(file, file);
+                sftpUtil.moveRemoteFile(file, "/processed"); // Or deleteRemoteFile(file)
+            }
+        } catch (Exception e) {
+            // Handle exception
+        } finally {
+            sftpUtil.disconnect();
+        }
+    }
+}
+```
+
+## Audit Utility
 
 ## Including the Library in Your Project
 
@@ -18,7 +76,7 @@ Ensure the JAR is available in your Maven repository. For local development, ins
 
 ## Enabling the audit utility
 
-The auto-configuration is **opt-in**. It activates only when the `audit.enabled=true` property is set in the consuming application. When enabled, the library uses the primary datasource configured in your service for audit persistence.
+The auto-configuration is **opt-in**. It activates only when the `shared-lib.audit.enabled=true` property is set in the consuming application. When enabled, the library uses the primary datasource configured in your service for audit persistence.
 
 ```yaml
 spring:
@@ -28,17 +86,18 @@ spring:
     username: root
     password: root
 
-audit:
-  enabled: true
+shared-lib:
+  audit:
+    enabled: true
 ```
 
 ### Optional tuning
 
 | Property | Default | Description |
 | --- | --- | --- |
-| `audit.table-name` | `audit_event` | Table used to persist audit records. |
-| `audit.hashing-algorithm` | `SHA-256` | Algorithm for chain hashing. |
-| `audit.initial-hash-value` | `0000…000` | Seed hash when the table is empty. |
+| `shared-lib.audit.table-name` | `audit_event` | Table used to persist audit records. |
+| `shared-lib.audit.hashing-algorithm` | `SHA-256` | Algorithm for chain hashing. |
+| `shared-lib.audit.initial-hash-value` | `0000…000` | Seed hash when the table is empty. |
 
 ## Usage
 

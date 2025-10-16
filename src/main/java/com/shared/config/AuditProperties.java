@@ -1,26 +1,16 @@
-package com.shared.audit.config;
-
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.util.StringUtils;
+package com.shared.config;
 
 /**
- * Configuration options for the audit utility.
+ * Configuration properties for the audit utility.
  */
-@ConfigurationProperties(prefix = "audit")
 public class AuditProperties {
 
-    private boolean enabled;
-
+    private boolean enabled = false;
     private String tableName = "audit_event";
-
     private String hashingAlgorithm = "SHA-256";
-
     private String initialHashValue = "0000000000000000000000000000000000000000000000000000000000000000";
 
-    public AuditProperties() {
-        // Default constructor required for configuration binding.
-    }
-
+    // Getters and setters
     public boolean isEnabled() {
         return enabled;
     }
@@ -34,9 +24,7 @@ public class AuditProperties {
     }
 
     public void setTableName(String tableName) {
-        if (StringUtils.hasText(tableName)) {
-            this.tableName = tableName;
-        }
+        this.tableName = tableName;
     }
 
     public String getHashingAlgorithm() {

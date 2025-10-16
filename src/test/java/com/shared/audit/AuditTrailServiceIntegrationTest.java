@@ -9,6 +9,7 @@ import com.shared.audit.model.AuditEventRequest;
 import com.shared.audit.model.AuditRecord;
 import com.shared.audit.config.AuditAutoConfiguration;
 import com.shared.audit.service.AuditTrailService;
+import com.shared.config.SharedLibCoreAutoConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -26,9 +27,10 @@ class AuditTrailServiceIntegrationTest {
                     DataSourceAutoConfiguration.class,
                     JdbcTemplateAutoConfiguration.class,
                     JacksonAutoConfiguration.class,
+                    SharedLibCoreAutoConfiguration.class,
                     AuditAutoConfiguration.class))
             .withPropertyValues(
-                    "audit.enabled=true",
+                    "shared-lib.audit.enabled=true",
                     "spring.datasource.url=jdbc:h2:mem:auditdb;MODE=MySQL;DB_CLOSE_DELAY=-1",
                     "spring.datasource.username=sa",
                     "spring.datasource.password=",

@@ -11,12 +11,14 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.shared.audit.repository.AuditEventRepository;
 import com.shared.audit.service.AuditHashService;
 import com.shared.audit.service.AuditTrailService;
-import com.shared.utilities.AuditHelper;
+import com.shared.config.SharedLibConfigurationProperties;
+import com.shared.audit.AuditHelper;
+
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -28,15 +30,14 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
  */
 @Configuration
 @ConditionalOnClass(NamedParameterJdbcTemplate.class)
-@ConditionalOnProperty(prefix = "audit", name = "enabled", havingValue = "true")
-@EnableConfigurationProperties({AuditProperties.class})
+@ConditionalOnProperty(prefix = "shared-lib.audit", name = "enabled", havingValue = "true")
 @EnableAspectJAutoProxy
 public class AuditAutoConfiguration {
 
-    private final AuditProperties auditProperties;
+    private final SharedLibConfigurationProperties sharedLibProperties;
 
-    public AuditAutoConfiguration(AuditProperties auditProperties) {
-        this.auditProperties = auditProperties;
+    public AuditAutoConfiguration(SharedLibConfigurationProperties sharedLibProperties) {
+        this.sharedLibProperties = sharedLibProperties;
     }
 
     @Bean(name = "auditNamedParameterJdbcTemplate")
@@ -52,13 +53,13 @@ public class AuditAutoConfiguration {
             @Qualifier("auditNamedParameterJdbcTemplate") NamedParameterJdbcTemplate jdbcTemplate,
             ObjectProvider<ObjectMapper> objectMapperProvider) {
         ObjectMapper objectMapper = objectMapperProvider.getIfAvailable(this::defaultObjectMapper);
-        return new AuditEventRepository(jdbcTemplate, auditProperties, objectMapper);
+        return new AuditEventRepository(jdbcTemplate, sharedLibProperties.getAudit(), objectMapper);
     }
     @Bean
     @ConditionalOnMissingBean
     public AuditHashService auditHashService(ObjectProvider<ObjectMapper> objectMapperProvider) {
         ObjectMapper objectMapper = objectMapperProvider.getIfAvailable(this::defaultObjectMapper);
-        return new AuditHashService(auditProperties, objectMapper);
+        return new AuditHashService(sharedLibProperties.getAudit(), objectMapper);
     }
 
     @Bean
