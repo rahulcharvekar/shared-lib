@@ -1,5 +1,0 @@
-com/shared/audit/AuditTrailServiceIntegrationTest$PrimaryDataSourceTestConfiguration.class
-com/shared/audit/AuditAutoConfigurationDisabledTest.class
-com/shared/utilities/sftp/SftpAutoConfigurationTest.class
-com/shared/audit/AuditTrailServiceIntegrationTest.class
-com/shared/utilities/fileupload/FileUploadAutoConfigurationTest.class
