@@ -7,8 +7,8 @@ public class SecurityProperties {
 
     private boolean enabled = false;
     private String[] permittedPaths = {"/actuator/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"};
+    private final IntrospectionProperties introspection = new IntrospectionProperties();
 
-    // Getters and setters
     public boolean isEnabled() {
         return enabled;
     }
@@ -23,5 +23,66 @@ public class SecurityProperties {
 
     public void setPermittedPaths(String[] permittedPaths) {
         this.permittedPaths = permittedPaths;
+    }
+
+    public IntrospectionProperties getIntrospection() {
+        return introspection;
+    }
+
+    public static class IntrospectionProperties {
+        private boolean enabled = true;
+        private String url;
+        private String apiKeyHeader = "X-Internal-Api-Key";
+        private String apiKey;
+        private java.time.Duration connectTimeout = java.time.Duration.ofSeconds(2);
+        private java.time.Duration readTimeout = java.time.Duration.ofSeconds(2);
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+
+        public String getApiKeyHeader() {
+            return apiKeyHeader;
+        }
+
+        public void setApiKeyHeader(String apiKeyHeader) {
+            this.apiKeyHeader = apiKeyHeader;
+        }
+
+        public String getApiKey() {
+            return apiKey;
+        }
+
+        public void setApiKey(String apiKey) {
+            this.apiKey = apiKey;
+        }
+
+        public java.time.Duration getConnectTimeout() {
+            return connectTimeout;
+        }
+
+        public void setConnectTimeout(java.time.Duration connectTimeout) {
+            this.connectTimeout = connectTimeout;
+        }
+
+        public java.time.Duration getReadTimeout() {
+            return readTimeout;
+        }
+
+        public void setReadTimeout(java.time.Duration readTimeout) {
+            this.readTimeout = readTimeout;
+        }
     }
 }

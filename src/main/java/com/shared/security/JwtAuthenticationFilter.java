@@ -1,16 +1,17 @@
 package com.shared.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-
+import com.shared.security.client.TokenIntrospectionClient;
+import com.shared.security.client.TokenIntrospectionResponse;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -20,15 +21,18 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Optional;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtConfig jwtConfig;
+    private final TokenIntrospectionClient tokenIntrospectionClient;
 
-    public JwtAuthenticationFilter(JwtConfig jwtConfig) {
+    public JwtAuthenticationFilter(JwtConfig jwtConfig, TokenIntrospectionClient tokenIntrospectionClient) {
         this.jwtConfig = jwtConfig;
+        this.tokenIntrospectionClient = tokenIntrospectionClient;
     }
 
     @jakarta.annotation.PostConstruct
@@ -44,7 +48,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         log.debug("JwtAuthenticationFilter: doFilterInternal called for URI: {}", request.getRequestURI());
         String jwt = getJwtFromRequest(request);
-        if (StringUtils.hasText(jwt) && validateToken(jwt)) {
+        if (!StringUtils.hasText(jwt)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (!validateToken(jwt)) {
+            log.debug("JWT validation failed for request URI: {}", request.getRequestURI());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
+            return;
+        }
+
+        if (tokenIntrospectionClient != null) {
+            Optional<TokenIntrospectionResponse> introspection = tokenIntrospectionClient.introspect(jwt);
+            if (introspection.isEmpty() || !introspection.get().isActive()) {
+                log.debug("Token introspection rejected request for URI: {}", request.getRequestURI());
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inactive");
+                return;
+            }
+
+            TokenIntrospectionResponse details = introspection.get();
+            String principal = details.getSubject();
+            if (!StringUtils.hasText(principal)) {
+                principal = getClaims(jwt).getSubject();
+            }
+
+            UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
+            authentication.setDetails(new JwtAuthenticationDetails(request, details));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        } else {
             Claims claims = getClaims(jwt);
             String username = claims.getSubject();
             UsernamePasswordAuthenticationToken authentication =
@@ -68,6 +101,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             getClaims(token);
             return true;
         } catch (Exception ex) {
+            log.debug("JWT validation error: {}", ex.getMessage());
             return false;
         }
     }
@@ -83,6 +117,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private static javax.crypto.SecretKey getSecretSigningKey(String secret) {
+        if (!StringUtils.hasText(secret)) {
+            throw new IllegalStateException("JWT secret is not configured");
+        }
         try {
             // Try hex decoding first
             byte[] keyBytes = hexStringToByteArray(secret);

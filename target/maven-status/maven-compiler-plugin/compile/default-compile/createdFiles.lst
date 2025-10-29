@@ -1,6 +1,7 @@
 com/shared/security/JwtConfig.class
 com/shared/common/annotation/Auditable.class
 com/shared/common/dao/BaseQueryDao.class
+com/shared/security/client/TokenIntrospectionClient.class
 com/shared/common/util/SecurePaginationUtil$ValidationResult.class
 com/shared/utilities/fileupload/FileStorageProperties.class
 com/shared/config/SharedLibCoreAutoConfiguration.class
@@ -22,11 +23,15 @@ com/shared/exception/GlobalExceptionHandler.class
 com/shared/common/util/ETagUtil.class
 com/shared/audit/config/AuditAutoConfiguration.class
 com/shared/config/AuditProperties.class
+com/shared/security/client/TokenIntrospectionResponse.class
 com/shared/common/dao/BaseQueryDao$RowMapper.class
 com/shared/exception/CustomErrorController.class
 com/shared/common/service/PaginationSessionService.class
 com/shared/audit/model/AuditRecord.class
 com/shared/audit/service/AuditableAspect.class
+com/shared/security/client/TokenIntrospectionRequest.class
+com/shared/security/JwtAuthenticationDetails.class
+com/shared/config/SecurityProperties$IntrospectionProperties.class
 com/shared/config/SecurityProperties.class
 com/shared/audit/model/AuditEvent.class
 com/shared/common/dto/SecurePaginationResponse$SortInfo.class

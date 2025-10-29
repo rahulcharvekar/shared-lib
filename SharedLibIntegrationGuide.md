@@ -58,6 +58,13 @@ shared-lib:
       - /v3/api-docs/**
       - /swagger-ui/**
       - /your/public/endpoints/**
+    introspection:
+      enabled: true
+      url: ${AUTH_SERVICE_BASE_URL:http://auth-service:8080}/internal/auth/introspect
+      api-key: ${INTERNAL_API_KEY}          # Shared secret for service-to-service auth
+      api-key-header: X-Internal-Api-Key    # Defaults to X-Internal-Api-Key
+      connect-timeout: 2s                   # Spring Boot duration format
+      read-timeout: 2s
 
   file-upload:
     enabled: true
@@ -72,6 +79,7 @@ app:
 
 - **Action:** Customize only the sections you intend to use. Secrets should come from environment variables or an external vault.
 - **Impact:** No application code needed; features remain dormant until enabled.
+- **Stateless validation:** With introspection enabled the shared JWT filter calls `auth-service` on every request to confirm `permissionVersion`, account status, and token expiry before letting the request through. Distribute the `INTERNAL_API_KEY` via your secret manager.
 
 ## Step 3: Enable Features in Code (If Required)
 Auto-configuration covers bean creation. You only need to touch code when you want to consume a service or add annotations.

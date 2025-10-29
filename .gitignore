@@ -1,1 +1,11 @@
 /.vscode
+target/shared-lib.jar
+target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+target/surefire-reports/com.shared.audit.AuditAutoConfigurationDisabledTest.txt
+target/surefire-reports/com.shared.audit.AuditTrailServiceIntegrationTest.txt
+target/surefire-reports/com.shared.utilities.fileupload.FileUploadAutoConfigurationTest.txt
+target/surefire-reports/TEST-com.shared.audit.AuditAutoConfigurationDisabledTest.xml
+target/surefire-reports/TEST-com.shared.audit.AuditTrailServiceIntegrationTest.xml
+target/surefire-reports/TEST-com.shared.utilities.fileupload.FileUploadAutoConfigurationTest.xml
+target/surefire-reports/TEST-com.shared.utilities.sftp.SftpAutoConfigurationTest.xml
