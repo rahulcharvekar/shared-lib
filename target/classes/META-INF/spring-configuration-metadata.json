@@ -36,8 +36,7 @@
       "name": "shared-lib.file-upload.base-dir",
       "type": "java.lang.String",
       "description": "Base directory where files will be stored. Defaults to \"uploads\".",
-      "sourceType": "com.shared.utilities.fileupload.FileStorageProperties",
-      "defaultValue": "uploads"
+      "sourceType": "com.shared.utilities.fileupload.FileStorageProperties"
     }
   ],
   "hints": []

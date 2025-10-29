@@ -2,8 +2,6 @@ package com.shared.audit.config;
 
 import java.time.Clock;
 
-import javax.sql.DataSource;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +20,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 /**
@@ -38,13 +35,6 @@ public class AuditAutoConfiguration {
 
     public AuditAutoConfiguration(SharedLibConfigurationProperties sharedLibProperties) {
         this.sharedLibProperties = sharedLibProperties;
-    }
-
-    @Bean(name = "auditNamedParameterJdbcTemplate")
-    @ConditionalOnMissingBean(name = "auditNamedParameterJdbcTemplate")
-    public NamedParameterJdbcTemplate auditNamedParameterJdbcTemplate(
-            @Qualifier("dataSource") DataSource dataSource) {
-        return new NamedParameterJdbcTemplate(dataSource);
     }
 
     @Bean

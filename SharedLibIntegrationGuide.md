@@ -40,6 +40,24 @@ shared-lib:
     hashing-algorithm: SHA-256
     initial-hash-value: 0000000000000000000000000000000000000000000000000000000000000000
 
+  entity-audit:
+    enabled: true  # Enable entity-level auditing (requires DataSource)
+    table-name: entity_audit_event
+    hashing-algorithm: SHA-256
+    initial-hash-value: 0000000000000000000000000000000000000000000000000000000000000000
+
+  auditing:
+    enabled: true  # Route all audit writes to a dedicated datasource
+    datasource:
+      url: jdbc:postgresql://db-audit.shared.svc.cluster.local:5432/audit
+      username: audit_writer
+      password: ${AUDIT_DATASOURCE_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        pool-name: audit-pool
+        maximum-pool-size: 5
+        minimum-idle: 1
+
   sftp:
     enabled: true  # Enable SFTP operations
     host: your-sftp-host
@@ -110,6 +128,53 @@ Auto-configuration covers bean creation. You only need to touch code when you wa
   }
   ```
 - **Impact:** Add annotation to methods or inject services where needed.
+- **Dedicated datastore:** Set `shared-lib.auditing.enabled=true` and supply `shared-lib.auditing.datasource.*` to route both API and entity audit writes to the specified database; if omitted, the default application datasource is used.
+
+### For Entity-Level Auditing
+- **Requirement:** DataSource bean, `shared-lib.entity-audit.enabled=true`, and the `entity_audit_event` table (see release notes for sample DDL).
+- **Annotation-Based Auditing:** Use `@EntityAuditable` to capture record numbers, operations, and before/after snapshots.
+  ```java
+  import com.shared.entityaudit.annotation.EntityAuditable;
+
+  @Service
+  public class WorkerReceiptService {
+
+      @EntityAuditable(
+          entityType = "WR_ENTITY",
+          recordNumber = "#existing.auditRecordNumber",
+          entityId = "#existing.id",
+          operation = "UPDATE",
+          oldValues = "#existing.toAuditMap()",
+          newValues = "#result.toAuditMap()",
+          changeSummary = "'Worker receipt updated via admin console'"
+      )
+      public WorkerReceipt updateReceipt(WorkerReceipt existing, WorkerReceiptUpdateCommand command) {
+          // mutate existing entity and return the updated instance
+          return applyChanges(existing, command);
+      }
+  }
+  ```
+  - SpEL expressions can reference method arguments as well as `#result`.
+- **Manual Auditing:** Inject `EntityAuditHelper` for explicit control.
+  ```java
+  @Autowired
+  private EntityAuditHelper entityAuditHelper;
+
+  public void recordEntityChange(WorkerReceipt before, WorkerReceipt after) {
+      entityAuditHelper.recordChange(
+          "WR_ENTITY",
+          before.getRecordNumber(),
+          before.getId().toString(),
+          "UPDATE",
+          before.toAuditMap(),
+          after.toAuditMap(),
+          Map.of("source", "admin-console"),
+          "Adjusted worker receipt totals",
+          null
+      );
+  }
+  ```
+- **Link API and Entity Audits:** Use the returned `EntityAuditRecord` to pass `auditNumber` into `AuditHelper.recordAudit(...)` so downstream queries can correlate UI/API activity with granular entity changes.
 
 ### For Security (JWT)
 - **Action:** Setting `shared-lib.security.enabled=true` activates the stateless security `SecurityFilterChain`.
