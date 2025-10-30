@@ -3,6 +3,7 @@ package com.shared.entityaudit.config;
 import java.time.Clock;
 
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,12 +16,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.shared.config.SharedLibConfigurationProperties;
 import com.shared.entityaudit.EntityAuditHelper;
+import com.shared.entityaudit.listener.EntityAuditListenerDelegate;
+import com.shared.entityaudit.listener.SharedEntityAuditListener;
 import com.shared.entityaudit.repository.EntityAuditRepository;
 import com.shared.entityaudit.service.EntityAuditHashService;
 import com.shared.entityaudit.service.EntityAuditTrailService;
 import com.shared.entityaudit.service.EntityAuditableAspect;
 
 import javax.sql.DataSource;
+import jakarta.persistence.EntityManagerFactory;
 
 /**
  * Auto configuration wiring the entity audit utility when explicitly enabled.
@@ -76,6 +80,17 @@ public class EntityAuditAutoConfiguration {
     @ConditionalOnMissingBean
     public EntityAuditableAspect entityAuditableAspect(EntityAuditHelper entityAuditHelper) {
         return new EntityAuditableAspect(entityAuditHelper);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public EntityAuditListenerDelegate entityAuditListenerDelegate(EntityAuditHelper entityAuditHelper,
+                                                                   EntityManagerFactory entityManagerFactory) {
+        EntityAuditListenerDelegate delegate = new EntityAuditListenerDelegate(entityAuditHelper, entityManagerFactory);
+        SharedEntityAuditListener.setDelegate(delegate);
+        org.slf4j.LoggerFactory.getLogger(EntityAuditAutoConfiguration.class)
+                .info("EntityAuditListenerDelegate registered with SharedEntityAuditListener");
+        return delegate;
     }
 
     private ObjectMapper defaultObjectMapper() {
