@@ -66,6 +66,76 @@ flowchart TD
 4. **Or use manually:** Inject `AuditHelper` and call `recordEvent(...)`.
 5. **Check logs:** Look for audit entries in your database.
 
+### Example: Capturing a Payment Update
+
+```yaml
+# src/main/resources/application.yml
+shared-lib:
+  audit:
+    enabled: true
+    table-name: audit_event
+    hashing-algorithm: SHA-256
+    initial-hash-value: 0000000000000000000000000000000000000000000000000000000000000000
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/payments
+    username: audit_user
+    password: ${DB_PASSWORD}
+```
+
+```java
+// src/main/java/com/example/payments/service/PaymentService.java
+// import statements omitted for brevity
+@Service
+public class PaymentService {
+
+    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
+
+    private final AuditTrailService auditTrailService;
+
+    public PaymentService(AuditTrailService auditTrailService) {
+        this.auditTrailService = auditTrailService;
+    }
+
+    @Auditable(
+        action = "PAYMENT_STATUS_UPDATED",
+        resourceType = "PAYMENT",
+        resourceId = "#payment.id.toString()",
+        details = "{'previousStatus': #previousStatus, 'newStatus': #payment.status}"
+    )
+    public void updateStatus(Payment payment, String previousStatus) {
+        // business logic here
+    }
+
+    public void capturePayment(Payment payment) {
+        AuditEventRequest request = new AuditEventRequest();
+        request.setTraceId(UUID.randomUUID().toString());
+        request.setUserId(SecurityContextHolder.getContext().getAuthentication().getName());
+        request.setAction("PAYMENT_CAPTURED");
+        request.setResourceType("PAYMENT");
+        request.setResourceId(payment.id().toString());
+        request.setOutcome("SUCCESS");
+        request.setDetails(Map.of(
+            "amount", payment.amount(),
+            "status", payment.status()
+        ));
+
+        AuditRecord record = auditTrailService.recordEvent(request);
+        log.info("Recorded audit entry {}", record.hash());
+    }
+}
+```
+
+| Column | Sample Value | Notes |
+| --- | --- | --- |
+| `occurred_at` | `2024-06-18T12:35:22.123456Z` | Captured with `Clock` injected into `AuditTrailService`. |
+| `trace_id` | `d296d3e7-4c42-4a06-8dec-84b6daa1e6d5` | Generated automatically when not supplied. |
+| `user_id` | `service-account@payments` | Resolved from `SecurityContextHolder`. |
+| `action` | `PAYMENT_STATUS_UPDATED` | From the `@Auditable` annotation. |
+| `details` | `{"previousStatus":"PENDING","newStatus":"SETTLED","result":{"id":"PAY-12345","status":"SETTLED"}}` | Includes method result plus custom map. |
+| `prev_hash` | `0000…0000` | Either the configured seed or the previous row’s `hash`. |
+| `hash` | `9fefdabf02d46fd63d66a7065fa8dd1f32a8bce4d1cfd43f477d0d4cec5f5f33` | Computed with chaining to guarantee integrity. |
+
 ---
 
 ## Step-by-Step: Entity Audit Trail
@@ -233,4 +303,3 @@ flowchart TD
 - `README.md` for code examples.
 - `SharedLibIntegrationGuide.md` for advanced setup.
 - Test files for sample usage.
-
