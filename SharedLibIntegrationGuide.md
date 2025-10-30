@@ -45,19 +45,6 @@ shared-lib:
     table-name: entity_audit_event
     hashing-algorithm: SHA-256
     initial-hash-value: 0000000000000000000000000000000000000000000000000000000000000000
-
-  auditing:
-    enabled: true  # Route all audit writes to a dedicated datasource
-    datasource:
-      url: jdbc:postgresql://db-audit.shared.svc.cluster.local:5432/audit
-      username: audit_writer
-      password: ${AUDIT_DATASOURCE_PASSWORD}
-      driver-class-name: org.postgresql.Driver
-      hikari:
-        pool-name: audit-pool
-        maximum-pool-size: 5
-        minimum-idle: 1
-
   sftp:
     enabled: true  # Enable SFTP operations
     host: your-sftp-host
@@ -97,6 +84,7 @@ app:
 
 - **Action:** Customize only the sections you intend to use. Secrets should come from environment variables or an external vault.
 - **Impact:** No application code needed; features remain dormant until enabled.
+- **Database reuse:** Audit and entity-audit writes use the application's primary datasource automatically; no separate audit DB configuration is needed.
 - **Stateless validation:** With introspection enabled the shared JWT filter calls `auth-service` on every request to confirm `permissionVersion`, account status, and token expiry before letting the request through. Distribute the `INTERNAL_API_KEY` via your secret manager.
 
 ## Step 3: Enable Features in Code (If Required)
@@ -128,7 +116,6 @@ Auto-configuration covers bean creation. You only need to touch code when you wa
   }
   ```
 - **Impact:** Add annotation to methods or inject services where needed.
-- **Dedicated datastore:** Set `shared-lib.auditing.enabled=true` and supply `shared-lib.auditing.datasource.*` to route both API and entity audit writes to the specified database; if omitted, the default application datasource is used.
 
 ### For Entity-Level Auditing
 - **Requirement:** DataSource bean, `shared-lib.entity-audit.enabled=true`, and the `entity_audit_event` table (see release notes for sample DDL).
@@ -141,7 +128,6 @@ Auto-configuration covers bean creation. You only need to touch code when you wa
 
       @EntityAuditable(
           entityType = "WR_ENTITY",
-          recordNumber = "#existing.auditRecordNumber",
           entityId = "#existing.id",
           operation = "UPDATE",
           oldValues = "#existing.toAuditMap()",
@@ -163,7 +149,6 @@ Auto-configuration covers bean creation. You only need to touch code when you wa
   public void recordEntityChange(WorkerReceipt before, WorkerReceipt after) {
       entityAuditHelper.recordChange(
           "WR_ENTITY",
-          before.getRecordNumber(),
           before.getId().toString(),
           "UPDATE",
           before.toAuditMap(),
@@ -173,6 +158,21 @@ Auto-configuration covers bean creation. You only need to touch code when you wa
           null
       );
   }
+  ```
+- The helper and aspect generate the `recordNumber` automatically. Provide a stable `entityId` whenever you expect future changes to flow into the same chain.
+- **Simple value diff:** When you only need to capture a single field's before/after values, use `recordValueChange`. It automatically resolves the logged-in user and wraps the values without requiring manual JSON construction.
+  ```java
+  entityAuditHelper.recordValueChange(
+      "WR_ENTITY",
+      before.getId().toString(),
+      "STATUS_UPDATE",
+      "status",
+      before.getStatus(),
+      after.getStatus(),
+      "Worker receipt status changed via admin console",
+      Map.of("source", "admin-console"),
+      null
+  );
   ```
 - **Link API and Entity Audits:** Use the returned `EntityAuditRecord` to pass `auditNumber` into `AuditHelper.recordAudit(...)` so downstream queries can correlate UI/API activity with granular entity changes.
 

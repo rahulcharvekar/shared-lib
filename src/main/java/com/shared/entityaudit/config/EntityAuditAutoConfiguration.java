@@ -3,7 +3,6 @@ package com.shared.entityaudit.config;
 import java.time.Clock;
 
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,6 +19,8 @@ import com.shared.entityaudit.repository.EntityAuditRepository;
 import com.shared.entityaudit.service.EntityAuditHashService;
 import com.shared.entityaudit.service.EntityAuditTrailService;
 import com.shared.entityaudit.service.EntityAuditableAspect;
+
+import javax.sql.DataSource;
 
 /**
  * Auto configuration wiring the entity audit utility when explicitly enabled.
@@ -39,8 +40,10 @@ public class EntityAuditAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public EntityAuditRepository entityAuditRepository(
-            @Qualifier("auditNamedParameterJdbcTemplate") NamedParameterJdbcTemplate jdbcTemplate,
+            ObjectProvider<NamedParameterJdbcTemplate> jdbcTemplateProvider,
+            ObjectProvider<DataSource> dataSourceProvider,
             ObjectProvider<ObjectMapper> objectMapperProvider) {
+        NamedParameterJdbcTemplate jdbcTemplate = resolveJdbcTemplate(jdbcTemplateProvider, dataSourceProvider);
         ObjectMapper objectMapper = objectMapperProvider.getIfAvailable(this::defaultObjectMapper);
         return new EntityAuditRepository(jdbcTemplate, sharedLibProperties.getEntityAudit(), objectMapper);
     }
@@ -79,5 +82,18 @@ public class EntityAuditAutoConfiguration {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         return mapper;
+    }
+
+    private NamedParameterJdbcTemplate resolveJdbcTemplate(ObjectProvider<NamedParameterJdbcTemplate> jdbcTemplateProvider,
+                                                           ObjectProvider<DataSource> dataSourceProvider) {
+        NamedParameterJdbcTemplate jdbcTemplate = jdbcTemplateProvider.getIfAvailable();
+        if (jdbcTemplate != null) {
+            return jdbcTemplate;
+        }
+        DataSource dataSource = dataSourceProvider.getIfAvailable();
+        if (dataSource == null) {
+            throw new IllegalStateException("No NamedParameterJdbcTemplate or DataSource bean available for entity audit repository");
+        }
+        return new NamedParameterJdbcTemplate(dataSource);
     }
 }

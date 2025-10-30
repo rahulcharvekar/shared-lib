@@ -1,7 +1,9 @@
 package com.shared.entityaudit.service;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -16,6 +18,8 @@ import com.shared.entityaudit.repository.EntityAuditRepository;
  */
 public class EntityAuditTrailService {
 
+    private static final DateTimeFormatter RECORD_NUMBER_DATE = DateTimeFormatter.BASIC_ISO_DATE;
+
     private final EntityAuditRepository entityAuditRepository;
     private final EntityAuditHashService entityAuditHashService;
     private final Clock clock;
@@ -29,6 +33,7 @@ public class EntityAuditTrailService {
     }
 
     public EntityAuditRecord recordChange(EntityAuditEventRequest request) {
+        ensureRecordNumber(request);
         validate(request);
 
         String recordNumber = request.getRecordNumber();
@@ -63,6 +68,50 @@ public class EntityAuditTrailService {
 
         long id = entityAuditRepository.save(event);
         return new EntityAuditRecord(id, occurredAt, auditNumber, recordNumber, hash, previousHash);
+    }
+
+    private void ensureRecordNumber(EntityAuditEventRequest request) {
+        if (hasText(request.getRecordNumber())) {
+            return;
+        }
+
+        String entityType = request.getEntityType();
+        String entityId = request.getEntityId().orElse(null);
+
+        if (!hasText(entityType)) {
+            return;
+        }
+
+        if (!hasText(entityId)) {
+            throw new EntityAuditPersistenceException("entityId must not be blank when recordNumber is not supplied");
+        }
+
+        entityAuditRepository.findRecordNumber(entityType, entityId)
+                .ifPresentOrElse(request::setRecordNumber,
+                        () -> request.setRecordNumber(generateRecordNumber()));
+    }
+
+    private String generateRecordNumber() {
+        LocalDate today = LocalDate.now(clock);
+        String datePrefix = today.format(RECORD_NUMBER_DATE);
+
+        int nextSequence = entityAuditRepository.findLatestRecordNumberWithPrefix(datePrefix)
+                .map(latest -> extractSequence(latest, datePrefix) + 1)
+                .orElse(1);
+
+        return datePrefix + String.format("%06d", nextSequence);
+    }
+
+    private int extractSequence(String recordNumber, String datePrefix) {
+        if (recordNumber != null && recordNumber.startsWith(datePrefix) && recordNumber.length() > datePrefix.length()) {
+            String suffix = recordNumber.substring(datePrefix.length());
+            try {
+                return Integer.parseInt(suffix);
+            } catch (NumberFormatException ignored) {
+                // fall through to default
+            }
+        }
+        return 0;
     }
 
     private void validate(EntityAuditEventRequest request) {

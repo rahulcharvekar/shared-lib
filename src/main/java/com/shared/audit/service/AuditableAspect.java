@@ -55,8 +55,6 @@ public class AuditableAspect {
             // Evaluate SpEL expressions for resourceId and details
             String resourceId = evaluateSpel(auditable.resourceId(), joinPoint);
             Map<String, Object> additionalDetails = evaluateDetailsSpel(auditable.details(), joinPoint);
-            Map<String, Object> oldValues = evaluateDetailsSpel(auditable.oldValues(), joinPoint);
-            Map<String, Object> newValues = evaluateDetailsSpel(auditable.newValues(), joinPoint);
 
             if (additionalDetails != null) {
                 details.putAll(additionalDetails);
@@ -67,9 +65,7 @@ public class AuditableAspect {
                 auditable.resourceType(),
                 resourceId,
                 outcome,
-                details,
-                oldValues,
-                newValues
+                details
             );
         }
 

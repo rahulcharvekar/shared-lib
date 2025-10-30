@@ -58,15 +58,14 @@ public class EntityAuditHelper {
     }
 
     public EntityAuditRecord recordChange(String entityType,
-                                          String recordNumber,
+                                          String entityId,
                                           String operation,
                                           Map<String, Object> oldValues,
                                           Map<String, Object> newValues) {
-        return recordChange(entityType, recordNumber, null, operation, oldValues, newValues, null, null, null);
+        return recordChange(entityType, entityId, operation, oldValues, newValues, null, null, null);
     }
 
     public EntityAuditRecord recordChange(String entityType,
-                                          String recordNumber,
                                           String entityId,
                                           String operation,
                                           Map<String, Object> oldValues,
@@ -76,7 +75,6 @@ public class EntityAuditHelper {
                                           String auditNumber) {
         EntityAuditEventRequest request = new EntityAuditEventRequest();
         request.setEntityType(entityType);
-        request.setRecordNumber(recordNumber);
         request.setEntityId(entityId);
         request.setOperation(operation);
         request.setOldValues(oldValues);
@@ -90,6 +88,40 @@ public class EntityAuditHelper {
         return recordChange(request);
     }
 
+    public EntityAuditRecord recordValueChange(String entityType,
+                                               String entityId,
+                                               String operation,
+                                               String fieldName,
+                                               Object oldValue,
+                                               Object newValue) {
+        return recordValueChange(entityType, entityId, operation, fieldName, oldValue, newValue, null, null, null);
+    }
+
+    public EntityAuditRecord recordValueChange(String entityType,
+                                               String entityId,
+                                               String operation,
+                                               String fieldName,
+                                               Object oldValue,
+                                               Object newValue,
+                                               String changeSummary,
+                                               Map<String, Object> metadata,
+                                               String auditNumber) {
+        Map<String, Object> safeMetadata = safeMetadata(metadata);
+        if (StringUtils.hasText(fieldName)) {
+            safeMetadata.putIfAbsent("field", fieldName);
+        }
+        return recordChange(
+                entityType,
+                entityId,
+                operation,
+                singleValueMap(fieldName, oldValue),
+                singleValueMap(fieldName, newValue),
+                safeMetadata,
+                changeSummary,
+                auditNumber
+        );
+    }
+
     private Map<String, Object> safeMetadata(Map<String, Object> metadata) {
         if (metadata == null || metadata.isEmpty()) {
             return new HashMap<>();
@@ -100,6 +132,13 @@ public class EntityAuditHelper {
             return copy;
         }
         return new HashMap<>(metadata);
+    }
+
+    private Map<String, Object> singleValueMap(String fieldName, Object value) {
+        Map<String, Object> map = new HashMap<>();
+        String key = StringUtils.hasText(fieldName) ? fieldName : "value";
+        map.put(key, value);
+        return map;
     }
 
     private HttpServletRequest currentRequest() {

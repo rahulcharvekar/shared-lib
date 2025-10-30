@@ -11,7 +11,6 @@ public class SharedLibConfigurationProperties {
 
     private final AuditProperties audit = new AuditProperties();
     private final EntityAuditProperties entityAudit = new EntityAuditProperties();
-    private final AuditingProperties auditing = new AuditingProperties();
     private final SftpProperties sftp = new SftpProperties();
     private final SecurityProperties security = new SecurityProperties();
 
@@ -21,10 +20,6 @@ public class SharedLibConfigurationProperties {
 
     public EntityAuditProperties getEntityAudit() {
         return entityAudit;
-    }
-
-    public AuditingProperties getAuditing() {
-        return auditing;
     }
 
     public SftpProperties getSftp() {

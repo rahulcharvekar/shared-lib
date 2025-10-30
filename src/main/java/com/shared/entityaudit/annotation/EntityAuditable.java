@@ -19,8 +19,9 @@ public @interface EntityAuditable {
 
     /**
      * Expression resolving to the entity's record number (one per entity instance).
+     * Leave blank to let the library generate and persist a record number automatically.
      */
-    String recordNumber();
+    String recordNumber() default "";
 
     /**
      * Expression resolving to the entity's identifier (optional).

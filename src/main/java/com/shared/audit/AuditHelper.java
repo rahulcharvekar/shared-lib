@@ -37,16 +37,6 @@ public class AuditHelper {
                             String resourceId,
                             String outcome,
                             Map<String, Object> details) {
-        recordAudit(action, resourceType, resourceId, outcome, details, null, null);
-    }
-
-    public void recordAudit(String action,
-                            String resourceType,
-                            String resourceId,
-                            String outcome,
-                            Map<String, Object> details,
-                            Map<String, Object> oldValues,
-                            Map<String, Object> newValues) {
         AuditEventRequest event = new AuditEventRequest();
         event.setTraceId(UUID.randomUUID().toString());
         event.setUserId(resolveCurrentUserId());
@@ -67,8 +57,6 @@ public class AuditHelper {
                 }
             }
         }
-        event.setOldValues(oldValues);
-        event.setNewValues(newValues);
 
         // Populate HTTP-related fields from current request
         HttpServletRequest request = getCurrentHttpRequest();

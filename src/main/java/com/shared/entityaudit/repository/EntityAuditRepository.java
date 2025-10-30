@@ -60,6 +60,54 @@ public class EntityAuditRepository {
         }
     }
 
+    public Optional<String> findRecordNumber(String entityType, String entityId) {
+        if (entityType == null || entityId == null) {
+            return Optional.empty();
+        }
+
+        String sql = """
+                SELECT record_number
+                FROM %s
+                WHERE entity_type = :entity_type
+                  AND entity_id = :entity_id
+                ORDER BY occurred_at ASC, id ASC
+                LIMIT 1
+                """.formatted(entityAuditProperties.getTableName());
+
+        Map<String, Object> params = Map.of(
+                "entity_type", entityType,
+                "entity_id", entityId
+        );
+
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, String.class));
+        } catch (DataAccessException ex) {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<String> findLatestRecordNumberWithPrefix(String prefix) {
+        if (prefix == null) {
+            return Optional.empty();
+        }
+
+        String sql = """
+                SELECT record_number
+                FROM %s
+                WHERE record_number LIKE :prefix
+                ORDER BY record_number DESC
+                LIMIT 1
+                """.formatted(entityAuditProperties.getTableName());
+
+        Map<String, Object> params = Map.of("prefix", prefix + "%");
+
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, String.class));
+        } catch (DataAccessException ex) {
+            return Optional.empty();
+        }
+    }
+
     public long save(EntityAuditEvent event) {
         String sql = """
                 INSERT INTO %s (

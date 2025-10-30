@@ -20,8 +20,6 @@ public final class AuditEvent {
     private final String clientIp;
     private final String userAgent;
     private final Map<String, Object> details;
-    private final Map<String, Object> oldValues;
-    private final Map<String, Object> newValues;
     private final String prevHash;
     private final String hash;
     private final String responseHash;
@@ -40,8 +38,6 @@ public final class AuditEvent {
         this.clientIp = builder.clientIp;
         this.userAgent = builder.userAgent;
         this.details = builder.details;
-        this.oldValues = builder.oldValues;
-        this.newValues = builder.newValues;
         this.prevHash = builder.prevHash;
         this.hash = builder.hash;
         this.responseHash = builder.responseHash;
@@ -90,14 +86,6 @@ public final class AuditEvent {
         return details;
     }
 
-    public Map<String, Object> getOldValues() {
-        return oldValues;
-    }
-
-    public Map<String, Object> getNewValues() {
-        return newValues;
-    }
-
     public String getPrevHash() {
         return prevHash;
     }
@@ -138,8 +126,6 @@ public final class AuditEvent {
                 .clientIp(copy.clientIp)
                 .userAgent(copy.userAgent)
                 .details(copy.details)
-                .oldValues(copy.oldValues)
-                .newValues(copy.newValues)
                 .prevHash(copy.prevHash)
                 .hash(copy.hash)
                 .responseHash(copy.responseHash)
@@ -159,8 +145,6 @@ public final class AuditEvent {
         private String clientIp;
         private String userAgent;
         private Map<String, Object> details;
-        private Map<String, Object> oldValues;
-        private Map<String, Object> newValues;
         private String prevHash;
         private String hash;
         private String responseHash;
@@ -218,16 +202,6 @@ public final class AuditEvent {
 
         public Builder details(Map<String, Object> details) {
             this.details = details;
-            return this;
-        }
-
-        public Builder oldValues(Map<String, Object> oldValues) {
-            this.oldValues = oldValues;
-            return this;
-        }
-
-        public Builder newValues(Map<String, Object> newValues) {
-            this.newValues = newValues;
             return this;
         }
 

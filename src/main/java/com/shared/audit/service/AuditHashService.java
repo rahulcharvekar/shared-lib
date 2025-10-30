@@ -65,8 +65,6 @@ public class AuditHashService {
             payload.put("clientSource", request.getClientSource().orElse(null));
             payload.put("requestedWith", request.getRequestedWith().orElse(null));
             payload.put("details", request.getDetails());
-            payload.put("oldValues", request.getOldValues());
-            payload.put("newValues", request.getNewValues());
             payload.put("responseHash", request.getResponseHash().orElse(null));
             return objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException ex) {

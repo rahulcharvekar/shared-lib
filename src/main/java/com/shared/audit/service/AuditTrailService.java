@@ -47,8 +47,6 @@ public class AuditTrailService {
                 .clientIp(request.getClientIp().orElse(null))
                 .userAgent(request.getUserAgent().orElse(null))
                 .details(request.getDetails())
-                .oldValues(request.getOldValues())
-                .newValues(request.getNewValues())
                 .prevHash(previousHash)
                 .hash(hash)
                 .responseHash(request.getResponseHash().orElse(null))

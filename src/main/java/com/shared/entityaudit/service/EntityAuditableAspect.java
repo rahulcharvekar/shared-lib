@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 
 import com.shared.entityaudit.EntityAuditHelper;
 import com.shared.entityaudit.annotation.EntityAuditable;
+import com.shared.entityaudit.model.EntityAuditEventRequest;
 
 /**
  * Aspect that intercepts methods annotated with {@link EntityAuditable}.
@@ -65,16 +66,22 @@ public class EntityAuditableAspect {
         }
         String changeSummary = evaluateString(entityAuditable.changeSummary(), postContext);
 
-        entityAuditHelper.recordChange(
-                entityAuditable.entityType(),
-                recordNumber,
-                entityId,
-                entityAuditable.operation(),
-                oldValues,
-                newValues,
-                metadata,
-                changeSummary,
-                auditNumber);
+        EntityAuditEventRequest request = new EntityAuditEventRequest();
+        request.setEntityType(entityAuditable.entityType());
+        if (StringUtils.hasText(recordNumber)) {
+            request.setRecordNumber(recordNumber);
+        }
+        request.setEntityId(entityId);
+        request.setOperation(entityAuditable.operation());
+        request.setOldValues(oldValues);
+        request.setNewValues(newValues);
+        request.setMetadata(metadata);
+        request.setChangeSummary(changeSummary);
+        if (StringUtils.hasText(auditNumber)) {
+            request.setAuditNumber(auditNumber);
+        }
+
+        entityAuditHelper.recordChange(request);
 
         return result;
     }

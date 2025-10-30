@@ -1,6 +1,6 @@
 # Shared Audit Utility
 
-This module provides a plug-and-play Spring Boot utility for recording application audit events in a dedicated audit database. It is packaged as a reusable JAR and exposes utilities for audit trail and SFTP operations.
+This module provides a plug-and-play Spring Boot utility for recording application audit events in the service's primary database. It is packaged as a reusable JAR and exposes utilities for audit trail and SFTP operations.
 
 The library includes a default `application.yml` with sample configurations that services can override.
 
@@ -149,8 +149,29 @@ The annotation supports SpEL expressions for dynamic values. Available attribute
 - `resourceType`: The type of resource.
 - `resourceId`: The resource ID (SpEL supported).
 - `details`: Additional details as a map (SpEL supported).
-- `oldValues`: Previous state (SpEL supported).
-- `newValues`: Updated state (SpEL supported).
+
+> **Note:** The `oldValues` and `newValues` attributes are deprecated for request auditing and are currently ignored. Use entity-level auditing if you need structured before/after payloads.
+
+### Entity-Level Audit Helper
+
+Enable `shared-lib.entity-audit.enabled=true` in your service to activate the entity audit module. Inject `EntityAuditHelper` for fine-grained change tracking. Besides the full `recordChange` method, you can now call `recordValueChange` for the common “single-field before/after” case—the helper resolves the logged-in user and wraps the values for you:
+
+```java
+entityAuditHelper.recordValueChange(
+    "WORKER_RECEIPT",
+    receipt.getId().toString(),
+    "STATUS_UPDATE",
+    "status",
+    previousStatus,
+    updatedStatus,
+    "Worker receipt status changed",
+    Map.of("source", "admin-console"),
+    null
+);
+```
+
+The helper returns an `EntityAuditRecord` that contains the generated identifiers and hash chain details should you need to correlate with API-level audits.
+Record numbers are generated automatically; just supply the stable `entityId` you want future changes to stitch against.
 
 ## Schema
 
@@ -169,8 +190,6 @@ The library expects an `audit_event` table with the columns below. The same stru
 | `client_ip` | `VARCHAR(64)` | Optional remote address. |
 | `user_agent` | `VARCHAR(256)` | Optional agent string. |
 | `details` | `JSON` | Arbitrary payload (nullable). |
-| `old_values` | `JSON` | Previous state (nullable). |
-| `new_values` | `JSON` | Updated state (nullable). |
 | `prev_hash` | `VARCHAR(64)` | Chain hash of the previous event. |
 | `hash` | `VARCHAR(64)` | Chain hash of the current event. |
 | `response_hash` | `VARCHAR(64)` | Optional response payload hash. |

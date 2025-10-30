@@ -19,8 +19,6 @@ public class AuditEventRequest {
     private String clientIp;
     private String userAgent;
     private Map<String, Object> details;
-    private Map<String, Object> oldValues;
-    private Map<String, Object> newValues;
     private String responseHash;
     private String referer;
     private String clientSource;
@@ -104,22 +102,6 @@ public class AuditEventRequest {
 
     public void setDetails(Map<String, Object> details) {
         this.details = details;
-    }
-
-    public Map<String, Object> getOldValues() {
-        return oldValues;
-    }
-
-    public void setOldValues(Map<String, Object> oldValues) {
-        this.oldValues = oldValues;
-    }
-
-    public Map<String, Object> getNewValues() {
-        return newValues;
-    }
-
-    public void setNewValues(Map<String, Object> newValues) {
-        this.newValues = newValues;
     }
 
     public Optional<String> getResponseHash() {

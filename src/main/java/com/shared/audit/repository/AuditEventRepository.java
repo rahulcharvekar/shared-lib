@@ -68,8 +68,6 @@ public class AuditEventRepository {
                     client_ip,
                     user_agent,
                     details,
-                    old_values,
-                    new_values,
                     prev_hash,
                     hash,
                     response_hash,
@@ -87,8 +85,6 @@ public class AuditEventRepository {
                     :client_ip,
                     :user_agent,
                     :details,
-                    :old_values,
-                    :new_values,
                     :prev_hash,
                     :hash,
                     :response_hash,
@@ -109,8 +105,6 @@ public class AuditEventRepository {
         parameters.addValue("client_ip", event.getClientIp().orElse(null));
         parameters.addValue("user_agent", event.getUserAgent().orElse(null));
         parameters.addValue("details", toJson(event.getDetails()));
-        parameters.addValue("old_values", toJson(event.getOldValues()));
-        parameters.addValue("new_values", toJson(event.getNewValues()));
         parameters.addValue("prev_hash", event.getPrevHash());
         parameters.addValue("hash", event.getHash());
         parameters.addValue("response_hash", event.getResponseHash().orElse(null));
