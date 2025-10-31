@@ -70,6 +70,15 @@ shared-lib:
       api-key-header: X-Internal-Api-Key    # Defaults to X-Internal-Api-Key
       connect-timeout: 2s                   # Spring Boot duration format
       read-timeout: 2s
+    dynamic-rbac:
+      enabled: true
+      base-url: ${AUTH_SERVICE_BASE_URL:http://auth-service:8080}
+      authorization-matrix-path: /internal/authz/users/{userId}/matrix
+      endpoint-metadata-path: /internal/authz/endpoints/metadata
+      policy-evaluation-enabled: true
+      matrix-cache-ttl: 5s
+      metadata-cache-ttl: 30s
+      fail-open: false
 
   file-upload:
     enabled: true
@@ -84,6 +93,7 @@ app:
 
 - **Action:** Customize only the sections you intend to use. Secrets should come from environment variables or an external vault.
 - **Impact:** No application code needed; features remain dormant until enabled.
+- **Dynamic RBAC:** When `dynamic-rbac.enabled=true`, the library injects a dynamic `AuthorizationManager` that consults auth-service for endpoint metadata and user authorization matrices. Set `base-url` to your auth-service host; relative paths above match the internal endpoints shipped by auth-service.
 - **Database reuse:** Audit and entity-audit writes use the application's primary datasource automatically; no separate audit DB configuration is needed.
 - **Stateless validation:** With introspection enabled the shared JWT filter calls `auth-service` on every request to confirm `permissionVersion`, account status, and token expiry before letting the request through. Distribute the `INTERNAL_API_KEY` via your secret manager.
 
