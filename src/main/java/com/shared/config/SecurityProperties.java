@@ -41,6 +41,7 @@ public class SecurityProperties {
         private String apiKey;
         private java.time.Duration connectTimeout = java.time.Duration.ofSeconds(2);
         private java.time.Duration readTimeout = java.time.Duration.ofSeconds(2);
+        private boolean failOpen = false;
 
         public boolean isEnabled() {
             return enabled;
@@ -88,6 +89,14 @@ public class SecurityProperties {
 
         public void setReadTimeout(java.time.Duration readTimeout) {
             this.readTimeout = readTimeout;
+        }
+
+        public boolean isFailOpen() {
+            return failOpen;
+        }
+
+        public void setFailOpen(boolean failOpen) {
+            this.failOpen = failOpen;
         }
     }
 

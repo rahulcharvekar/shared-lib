@@ -19,22 +19,24 @@ public class TokenIntrospectionClient {
 
     private final RestTemplate restTemplate;
     private final SecurityProperties.IntrospectionProperties properties;
+    private final boolean failOpenOnError;
 
     public TokenIntrospectionClient(RestTemplate restTemplate,
                                     SecurityProperties.IntrospectionProperties properties) {
         this.restTemplate = restTemplate;
         this.properties = properties;
+        this.failOpenOnError = properties.isFailOpen();
     }
 
-    public Optional<TokenIntrospectionResponse> introspect(String token) {
+    public TokenIntrospectionResult introspect(String token) {
         if (!StringUtils.hasText(token)) {
             log.debug("TokenIntrospectionClient received blank token");
-            return Optional.empty();
+            return TokenIntrospectionResult.inactive();
         }
 
         if (!StringUtils.hasText(properties.getUrl())) {
             log.warn("Token introspection URL is not configured. Denying request.");
-            return Optional.empty();
+            return TokenIntrospectionResult.error(failOpenOnError);
         }
 
         HttpHeaders headers = new HttpHeaders();
@@ -49,14 +51,67 @@ public class TokenIntrospectionClient {
                 restTemplate.postForEntity(properties.getUrl(), request, TokenIntrospectionResponse.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                return Optional.of(response.getBody());
+                TokenIntrospectionResponse body = response.getBody();
+                if (body.isActive()) {
+                    return TokenIntrospectionResult.active(body);
+                }
+                return TokenIntrospectionResult.inactive();
+            }
+
+            if (response.getStatusCode().is5xxServerError()) {
+                log.error("Token introspection returned server error status: {}", response.getStatusCode());
+                return TokenIntrospectionResult.error(failOpenOnError);
             }
 
             log.warn("Token introspection returned non-success status: {}", response.getStatusCode());
-            return Optional.empty();
+            return TokenIntrospectionResult.inactive();
         } catch (RestClientException ex) {
             log.error("Token introspection call failed: {}", ex.getMessage());
-            return Optional.empty();
+            return TokenIntrospectionResult.error(failOpenOnError);
+        }
+    }
+
+    public static final class TokenIntrospectionResult {
+        public enum Status {
+            ACTIVE,
+            INACTIVE,
+            ERROR
+        }
+
+        private final Status status;
+        private final TokenIntrospectionResponse response;
+        private final boolean allowOnError;
+
+        private TokenIntrospectionResult(Status status,
+                                         TokenIntrospectionResponse response,
+                                         boolean allowOnError) {
+            this.status = status;
+            this.response = response;
+            this.allowOnError = allowOnError;
+        }
+
+        public static TokenIntrospectionResult active(TokenIntrospectionResponse response) {
+            return new TokenIntrospectionResult(Status.ACTIVE, response, false);
+        }
+
+        public static TokenIntrospectionResult inactive() {
+            return new TokenIntrospectionResult(Status.INACTIVE, null, false);
+        }
+
+        public static TokenIntrospectionResult error(boolean allowOnError) {
+            return new TokenIntrospectionResult(Status.ERROR, null, allowOnError);
+        }
+
+        public Status getStatus() {
+            return status;
+        }
+
+        public Optional<TokenIntrospectionResponse> getResponse() {
+            return Optional.ofNullable(response);
+        }
+
+        public boolean isAllowOnError() {
+            return allowOnError;
         }
     }
 }

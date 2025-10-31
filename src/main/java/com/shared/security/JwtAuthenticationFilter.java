@@ -21,7 +21,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Optional;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -60,30 +59,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (tokenIntrospectionClient != null) {
-            Optional<TokenIntrospectionResponse> introspection = tokenIntrospectionClient.introspect(jwt);
-            if (introspection.isEmpty() || !introspection.get().isActive()) {
-                log.debug("Token introspection rejected request for URI: {}", request.getRequestURI());
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inactive");
-                return;
+            TokenIntrospectionClient.TokenIntrospectionResult result = tokenIntrospectionClient.introspect(jwt);
+            switch (result.getStatus()) {
+                case ACTIVE -> {
+                    TokenIntrospectionResponse details = result.getResponse().orElseThrow();
+                    String principal = details.getSubject();
+                    if (!StringUtils.hasText(principal)) {
+                        principal = getClaims(jwt).getSubject();
+                    }
+                    UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
+                    authentication.setDetails(new JwtAuthenticationDetails(request, details));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+                case INACTIVE -> {
+                    log.debug("Token introspection rejected request for URI: {}", request.getRequestURI());
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inactive");
+                    return;
+                }
+                case ERROR -> {
+                    if (result.isAllowOnError()) {
+                        log.warn("Token introspection unavailable for URI: {}. Falling back to local JWT validation (fail-open enabled).",
+                                request.getRequestURI());
+                        authenticateWithClaims(request, jwt);
+                    } else {
+                        log.error("Token introspection unavailable for URI: {}. Denying request.", request.getRequestURI());
+                        response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Token introspection unavailable");
+                        return;
+                    }
+                }
             }
-
-            TokenIntrospectionResponse details = introspection.get();
-            String principal = details.getSubject();
-            if (!StringUtils.hasText(principal)) {
-                principal = getClaims(jwt).getSubject();
-            }
-
-            UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
-            authentication.setDetails(new JwtAuthenticationDetails(request, details));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
         } else {
-            Claims claims = getClaims(jwt);
-            String username = claims.getSubject();
-            UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            authenticateWithClaims(request, jwt);
         }
         filterChain.doFilter(request, response);
     }
@@ -94,6 +101,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return bearerToken.substring(7);
         }
         return null;
+    }
+
+    private void authenticateWithClaims(HttpServletRequest request, String jwt) {
+        Claims claims = getClaims(jwt);
+        String username = claims.getSubject();
+        UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     private boolean validateToken(String token) {

@@ -53,15 +53,17 @@ public class BaseQueryDao {
                                          int page, int size, RowMapper<T> mapper) {
         // Get total count
         Long totalCount = queryForCount(countSql, params);
-        
+
+        Map<String, Object> queryParams = new java.util.HashMap<>(params);
+
         // Add pagination to the query
         String paginatedSql = baseSql + " LIMIT :limit OFFSET :offset";
-        params.put("limit", size);
-        params.put("offset", page * size);
-        
+        queryParams.put("limit", size);
+        queryParams.put("offset", page * size);
+
         // Get page data
-        List<T> content = queryForList(paginatedSql, params, mapper);
-        
+        List<T> content = queryForList(paginatedSql, queryParams, mapper);
+
         return new PageResult<>(content, page, size, totalCount);
     }
     
