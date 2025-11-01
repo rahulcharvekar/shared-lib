@@ -1,6 +1,7 @@
 package com.shared.entityaudit.repository;
 
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -156,9 +157,9 @@ public class EntityAuditRepository {
         parameters.addValue("operation", event.getOperation());
         parameters.addValue("performed_by", event.getPerformedBy().orElse(null));
         parameters.addValue("trace_id", event.getTraceId().orElse(null));
-        parameters.addValue("metadata", toJson(event.getMetadata()));
-        parameters.addValue("old_values", toJson(event.getOldValues()));
-        parameters.addValue("new_values", toJson(event.getNewValues()));
+        addJsonParameter(parameters, "metadata", event.getMetadata());
+        addJsonParameter(parameters, "old_values", event.getOldValues());
+        addJsonParameter(parameters, "new_values", event.getNewValues());
         parameters.addValue("change_summary", event.getChangeSummary().orElse(null));
         parameters.addValue("client_ip", event.getClientIp().orElse(null));
         parameters.addValue("user_agent", event.getUserAgent().orElse(null));
@@ -180,6 +181,17 @@ public class EntityAuditRepository {
 
     private Timestamp toTimestamp(OffsetDateTime occurredAt) {
         return Timestamp.from(occurredAt.toInstant());
+    }
+
+    private void addJsonParameter(MapSqlParameterSource parameters,
+                                  String parameterName,
+                                  Map<String, Object> data) {
+        String json = toJson(data);
+        if (json == null) {
+            parameters.addValue(parameterName, null);
+        } else {
+            parameters.addValue(parameterName, json, Types.OTHER);
+        }
     }
 
     private String toJson(Map<String, Object> data) {

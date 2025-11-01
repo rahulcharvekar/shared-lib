@@ -1,6 +1,7 @@
 package com.shared.audit.repository;
 
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -104,7 +105,7 @@ public class AuditEventRepository {
         parameters.addValue("outcome", event.getOutcome());
         parameters.addValue("client_ip", event.getClientIp().orElse(null));
         parameters.addValue("user_agent", event.getUserAgent().orElse(null));
-        parameters.addValue("details", toJson(event.getDetails()));
+        addJsonParameter(parameters, "details", event.getDetails());
         parameters.addValue("prev_hash", event.getPrevHash());
         parameters.addValue("hash", event.getHash());
         parameters.addValue("response_hash", event.getResponseHash().orElse(null));
@@ -137,6 +138,15 @@ public class AuditEventRepository {
             return objectMapper.writeValueAsString(data);
         } catch (JsonProcessingException ex) {
             throw new AuditPersistenceException("Failed to serialize audit payload to JSON", ex);
+        }
+    }
+
+    private void addJsonParameter(MapSqlParameterSource parameters, String parameterName, Map<String, Object> data) {
+        String json = toJson(data);
+        if (json == null) {
+            parameters.addValue(parameterName, null);
+        } else {
+            parameters.addValue(parameterName, json, Types.OTHER);
         }
     }
 }
