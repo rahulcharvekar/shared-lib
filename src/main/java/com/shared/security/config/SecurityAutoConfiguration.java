@@ -9,6 +9,8 @@ import com.shared.security.rbac.DynamicEndpointAuthorizationManager;
 import com.shared.security.rbac.client.AuthorizationMatrixClient;
 import com.shared.security.rbac.client.EndpointAuthorizationMetadataClient;
 import com.shared.security.rbac.client.PolicyEvaluationClient;
+import com.shared.security.rls.RLSContextFilter;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -44,6 +46,7 @@ public class SecurityAutoConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    JwtAuthenticationFilter jwtAuthenticationFilter,
+                                                   ObjectProvider<RLSContextFilter> rlsContextFilterProvider,
                                                    SharedLibConfigurationProperties sharedLibProperties,
                                                    ObjectProvider<DynamicEndpointAuthorizationManager> dynamicManagerProvider) throws Exception {
         applyDynamicRbacDefaults(sharedLibProperties.getSecurity());
@@ -67,6 +70,13 @@ public class SecurityAutoConfiguration {
                 }
             })
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        
+        // Add RLS context filter after JWT authentication so user context is available
+        RLSContextFilter rlsContextFilter = rlsContextFilterProvider.getIfAvailable();
+        if (rlsContextFilter != null) {
+            http.addFilterAfter(rlsContextFilter, JwtAuthenticationFilter.class);
+        }
+        
         return http.build();
     }
 
