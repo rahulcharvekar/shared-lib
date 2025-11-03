@@ -74,7 +74,9 @@ public class AuditEventRepository {
                     response_hash,
                     referer,
                     client_source,
-                    requested_with
+                    requested_with,
+                    service_name,
+                    source_schema
                 ) VALUES (
                     :occurred_at,
                     :trace_id,
@@ -91,7 +93,9 @@ public class AuditEventRepository {
                     :response_hash,
                     :referer,
                     :client_source,
-                    :requested_with
+                    :requested_with,
+                    :service_name,
+                    :source_schema
                 )
                 """.formatted(auditProperties.getTableName());
 
@@ -112,6 +116,8 @@ public class AuditEventRepository {
         parameters.addValue("referer", event.getReferer().orElse(null));
         parameters.addValue("client_source", event.getClientSource().orElse(null));
         parameters.addValue("requested_with", event.getRequestedWith().orElse(null));
+        parameters.addValue("service_name", auditProperties.getServiceName());
+        parameters.addValue("source_schema", auditProperties.getSourceSchema());
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         try {

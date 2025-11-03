@@ -6,9 +6,12 @@ package com.shared.config;
 public class EntityAuditProperties {
 
     private boolean enabled = false;
-    private String tableName = "entity_audit_event";
+    private String tableName = "audit.entity_audit_event";
     private String hashingAlgorithm = "SHA-256";
     private String initialHashValue = "0000000000000000000000000000000000000000000000000000000000000000";
+    private String serviceName;
+    private String sourceSchema;
+    private String sourceTable;
 
     public boolean isEnabled() {
         return enabled;
@@ -40,5 +43,29 @@ public class EntityAuditProperties {
 
     public void setInitialHashValue(String initialHashValue) {
         this.initialHashValue = initialHashValue;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+    public String getSourceSchema() {
+        return sourceSchema;
+    }
+
+    public void setSourceSchema(String sourceSchema) {
+        this.sourceSchema = sourceSchema;
+    }
+
+    public String getSourceTable() {
+        return sourceTable;
+    }
+
+    public void setSourceTable(String sourceTable) {
+        this.sourceTable = sourceTable;
     }
 }

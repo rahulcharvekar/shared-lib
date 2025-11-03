@@ -127,7 +127,10 @@ public class EntityAuditRepository {
                     client_ip,
                     user_agent,
                     prev_hash,
-                    hash
+                    hash,
+                    service_name,
+                    source_schema,
+                    source_table
                 ) VALUES (
                     :occurred_at,
                     :audit_number,
@@ -144,7 +147,10 @@ public class EntityAuditRepository {
                     :client_ip,
                     :user_agent,
                     :prev_hash,
-                    :hash
+                    :hash,
+                    :service_name,
+                    :source_schema,
+                    :source_table
                 )
                 """.formatted(entityAuditProperties.getTableName());
 
@@ -165,6 +171,9 @@ public class EntityAuditRepository {
         parameters.addValue("user_agent", event.getUserAgent().orElse(null));
         parameters.addValue("prev_hash", event.getPrevHash());
         parameters.addValue("hash", event.getHash());
+        parameters.addValue("service_name", entityAuditProperties.getServiceName());
+        parameters.addValue("source_schema", entityAuditProperties.getSourceSchema());
+        parameters.addValue("source_table", entityAuditProperties.getSourceTable());
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         try {

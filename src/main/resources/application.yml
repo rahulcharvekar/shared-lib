@@ -5,7 +5,18 @@
 shared-lib:
   audit:
     enabled: false  # Set to true to enable audit logging
-    table-name: audit_event
+    table-name: audit.audit_event  # Centralized audit schema
+    service-name: default-service  # Override this in each service
+    source-schema: public          # Override this in each service
+    hashing-algorithm: SHA-256
+    initial-hash-value: 0000000000000000000000000000000000000000000000000000000000000000
+
+  entity-audit:
+    enabled: false  # Set to true to enable entity audit logging
+    table-name: audit.entity_audit_event  # Centralized entity audit schema
+    service-name: default-service  # Override this in each service
+    source-schema: public          # Override this in each service
+    source-table: unknown          # Override this in each service
     hashing-algorithm: SHA-256
     initial-hash-value: 0000000000000000000000000000000000000000000000000000000000000000
 
