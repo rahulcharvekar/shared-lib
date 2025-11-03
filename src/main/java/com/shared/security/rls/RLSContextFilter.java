@@ -1,5 +1,6 @@
 package com.shared.security.rls;
 
+import com.shared.security.JwtAuthenticationDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -55,8 +56,8 @@ public class RLSContextFilter extends OncePerRequestFilter {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             
             if (authentication != null && authentication.isAuthenticated()) {
-                // Get the principal (user ID/name)
-                String userId = authentication.getName();
+                Object principal = authentication.getPrincipal();
+                String userId = extractUserId(principal);
                 
                 if (userId != null && !userId.isEmpty()) {
                     log.debug("Setting RLS context for request: user={}, path={}", userId, request.getRequestURI());
@@ -75,5 +76,55 @@ public class RLSContextFilter extends OncePerRequestFilter {
         
         // Continue the filter chain
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Extracts the user ID from the authentication principal.
+     * Supports multiple principal types for flexibility across services.
+     * 
+     * @param principal the authentication principal
+     * @return the user ID as a String, or null if not extractable
+     */
+    private String extractUserId(Object principal) {
+        if (principal == null) {
+            return null;
+        }
+        
+        // PRIORITY 1: Check authentication details for user_id from JWT introspection
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getDetails() instanceof JwtAuthenticationDetails) {
+            JwtAuthenticationDetails details = (JwtAuthenticationDetails) auth.getDetails();
+            Long userId = details.getUserId();
+            if (userId != null) {
+                log.trace("Extracted user ID from JwtAuthenticationDetails: {}", userId);
+                return userId.toString();
+            }
+        }
+        
+        // PRIORITY 2: Try reflection to get getId() method (works with User entities that have getId())
+        try {
+            java.lang.reflect.Method getIdMethod = principal.getClass().getMethod("getId");
+            Object id = getIdMethod.invoke(principal);
+            if (id != null) {
+                log.trace("Extracted user ID via getId() method: {}", id);
+                return id.toString();
+            }
+        } catch (Exception e) {
+            // getId() method not found or failed, try other methods
+            log.trace("Could not extract user ID via getId() method", e);
+        }
+        
+        // PRIORITY 3: If principal is a UserDetails, try to use username
+        // NOTE: This returns username, not user_id, which may not work for RLS
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            org.springframework.security.core.userdetails.UserDetails userDetails = 
+                (org.springframework.security.core.userdetails.UserDetails) principal;
+            log.warn("Falling back to username as user ID (may not work with RLS): {}", userDetails.getUsername());
+            return userDetails.getUsername();
+        }
+        
+        // PRIORITY 4: Last resort - use toString() (username)
+        log.warn("Falling back to principal.toString() as user ID (may not work with RLS): {}", principal);
+        return principal.toString();
     }
 }
