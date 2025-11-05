@@ -36,13 +36,18 @@ Each feature is guarded behind configuration flags. Override only what you need 
 shared-lib:
   audit:
     enabled: true  # Enable audit logging (requires DataSource)
-    table-name: audit_event
+    table-name: audit.audit_event
+    service-name: your-service-name        # e.g., payment-flow-service
+    source-schema: your_schema             # e.g., payment_flow
     hashing-algorithm: SHA-256
     initial-hash-value: 0000000000000000000000000000000000000000000000000000000000000000
 
   entity-audit:
     enabled: true  # Enable entity-level auditing (requires DataSource)
-    table-name: entity_audit_event
+    table-name: audit.entity_audit_event
+    service-name: your-service-name
+    source-schema: your_schema
+    source-table: primary_table_name       # e.g., worker_payments
     hashing-algorithm: SHA-256
     initial-hash-value: 0000000000000000000000000000000000000000000000000000000000000000
   sftp:
@@ -93,6 +98,7 @@ app:
 
 - **Action:** Customize only the sections you intend to use. Secrets should come from environment variables or an external vault.
 - **Impact:** No application code needed; features remain dormant until enabled.
+- **Service tagging:** Always set `service-name`, `source-schema`, and (for entity audit) `source-table` so downstream analytics can filter events correctly.
 - **Dynamic RBAC:** When `dynamic-rbac.enabled=true`, the library injects a dynamic `AuthorizationManager` that consults auth-service for endpoint metadata and user authorization matrices. Set `base-url` to your auth-service host; relative paths above match the internal endpoints shipped by auth-service.
 - **Database reuse:** Audit and entity-audit writes use the application's primary datasource automatically; no separate audit DB configuration is needed.
 - **Stateless validation:** With introspection enabled the shared JWT filter calls `auth-service` on every request to confirm `permissionVersion`, account status, and token expiry before letting the request through. Distribute the `INTERNAL_API_KEY` via your secret manager.
